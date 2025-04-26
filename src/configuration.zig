@@ -42,6 +42,9 @@ pub fn LoadPlayerParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = false,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit2: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -61,6 +64,9 @@ pub fn LoadPlayerParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = true,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit3: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -80,6 +86,9 @@ pub fn LoadPlayerParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = true,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit4: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -99,6 +108,9 @@ pub fn LoadPlayerParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = false,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     var playerParty = [_]battleModels.BattleUnit{
@@ -149,6 +161,9 @@ pub fn LoadEnemyParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = false,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit2: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -168,6 +183,9 @@ pub fn LoadEnemyParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = false,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit3: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -187,6 +205,9 @@ pub fn LoadEnemyParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = true,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     const unit4: battleModels.BattleUnit = battleModels.BattleUnit{
@@ -206,6 +227,9 @@ pub fn LoadEnemyParty() [*]battleModels.BattleUnit {
         .baseSpeed = 30,
         .moves = moves,
         .backRow = true,
+        .exp = 15,
+        .expToNextLevel = 30,
+        .pathToModel = "src/assets/FinalBaseMesh.obj",
     };
 
     var playerParty = [_]battleModels.BattleUnit{

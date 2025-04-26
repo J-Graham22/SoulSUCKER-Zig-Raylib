@@ -8,13 +8,13 @@ pub const Stat = enum {
 };
 
 pub const Move = struct {
-    name: []const u8,
+    name: [*]const u8,
     stat: Stat,
     value: i16,
 };
 
 pub const BattleUnit = struct {
-    name: []const u8,
+    name: [*]const u8,
     level: u8,
     exp: u16,
     expToNextLevel: u16,
@@ -32,6 +32,7 @@ pub const BattleUnit = struct {
     baseSpeed: u16,
     moves: [6]Move,
     backRow: bool,
+    pathToModel: [:0]const u8,
 };
 
 pub const Action = struct {

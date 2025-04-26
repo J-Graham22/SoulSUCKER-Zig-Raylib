@@ -51,8 +51,14 @@ pub fn main() !void {
         defer rl.endMode3D();
 
         for (units[0..4], 0..4) |_, i| {
-            rl.drawCube(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, units[i].color);
-            rl.drawCubeWires(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, rl.Color.black);
+            //const model = rl.loadModel(units[i].pathToModel);
+            const model = try rl.loadModel("src/assets/FinalBaseMesh.obj");
+            defer rl.unloadModel(model);
+
+            rl.drawModel(model, units[i].position, 1.0, units[i].color);
+
+            //rl.drawCube(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, units[i].color);
+            //rl.drawCubeWires(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, rl.Color.black);
         }
         for (enemyUnits[0..4], 0..4) |_, _| {
             //rl.drawCube(rl.Vector3{ .x = enemyUnits[j].position.x, .y = enemyUnits[j].position.y, .z = enemyUnits[j].position.z }, 2, 2, 2, enemyUnits[j].color);
@@ -81,7 +87,7 @@ fn MoveCameraDebug(deltaTime: f32, camera: *rl.Camera3D) void {
     }
 }
 
-const sceneUnit = struct { unit: *battleModels.BattleUnit, color: rl.Color, position: rl.Vector3 };
+const sceneUnit = struct { unit: *battleModels.BattleUnit, color: rl.Color, position: rl.Vector3, pathToModel: [:0]const u8 };
 
 fn LoadSceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
     var units: [4]sceneUnit = .{undefined} ** 4;
@@ -97,7 +103,7 @@ fn LoadSceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
 
         const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) -5 else 0 };
 
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position };
+        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
         units[i] = unit;
     }
 
@@ -111,7 +117,7 @@ fn LoadEnemySceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
         const color: rl.Color = rl.Color.purple;
         const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) 10 else 5 };
 
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position };
+        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
         units[i] = unit;
     }
 
