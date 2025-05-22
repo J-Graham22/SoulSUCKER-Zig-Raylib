@@ -4,6 +4,7 @@ const std = @import("std");
 
 const battleModels = @import("battleModels.zig");
 const configuration = @import("configuration.zig");
+const sceneManager = @import("sceneManager.zig");
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("ZigRaylibGame_lib");
@@ -15,11 +16,11 @@ pub fn main() !void {
     rl.initWindow(1280, 720, "gaming!!");
     defer rl.closeWindow();
 
-    const gokuImage = try rl.loadImage("src/assets/goku.png");
-    const gokuTexture = try rl.loadTextureFromImage(gokuImage);
+    //const gokuImage = try rl.loadImage("src/assets/goku.png");
+    //const gokuTexture = try rl.loadTextureFromImage(gokuImage);
 
-    rl.unloadImage(gokuImage);
-    defer rl.unloadTexture(gokuTexture);
+    //rl.unloadImage(gokuImage);
+    //defer rl.unloadTexture(gokuTexture);
 
     var camera = rl.Camera3D{
         .position = .{ .x = 4.0, .y = 2.0, .z = 4.0 },
@@ -30,6 +31,8 @@ pub fn main() !void {
     };
 
     rl.setTargetFPS(60);
+
+    try sceneManager.Load2DScene();
 
     const playerParty: [*]battleModels.BattleUnit = configuration.LoadPlayerParty();
     var units: [4]sceneUnit = LoadSceneUnits(playerParty);
