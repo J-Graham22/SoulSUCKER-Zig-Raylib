@@ -43,26 +43,40 @@ pub const OverworldPlayer = struct {
 
     pub fn handleMovement(self: *OverworldPlayer, map: tilemap.Tilemap, tilesSlice: []const tilemap.Tile) void {
         if(self.numberOfFramesLeftForTween > 0) {
-            //now target pos has been set, let's see if we can move there
-            std.debug.print("checking if target x {} and target y {} is a valid position\n", .{self.targetX, self.targetY});
             var validTarget = true;
-            if((self.targetX < 0 or self.targetX > map.mapWidth * map.tileSize) or
-                (self.targetY < 0 or self.targetY > map.mapHeight * map.tileSize)) {
-                std.debug.print("outside tilemap\n", .{});
-                validTarget = false; //ban areas outside tilemap
+
+            while(true) {
+                //now target pos has been set, let's see if we can move there
+                std.debug.print("checking if target x {} and target y {} is a valid position\n", .{self.targetX, self.targetY});
+                if((self.targetX < 0 or self.targetX > map.mapWidth * map.tileSize) or
+                    (self.targetY < 0 or self.targetY > map.mapHeight * map.tileSize)) {
+                    std.debug.print("outside tilemap\n", .{});
+                    validTarget = false; //ban areas outside tilemap
+                    break;
+                }
+
+                const xPosTileSpace: i32 = @divFloor(self.targetX, self.tileSize);
+                const yPosTileSpace: i32 = @divFloor(self.targetY, self.tileSize);
+                const mapWidth_i32Cast: i32 = @intCast(map.mapWidth);
+                const tileIndex_isize: isize = @intCast((yPosTileSpace * mapWidth_i32Cast) + xPosTileSpace);
+                
+                std.debug.print("got tile index {}\n", .{tileIndex_isize});
+                if(tileIndex_isize < 0 or tileIndex_isize >= tilesSlice.len) {
+                    std.debug.print("tile index not valid\n", .{});
+                    validTarget = false;
+                    break;
+                }
+
+                const tileIndex: usize = @intCast(tileIndex_isize);
+                std.debug.print("is tile walkable? {}\n", .{tilesSlice[tileIndex].walkable});
+                if(tilesSlice[tileIndex].walkable == false) {
+                    std.debug.print("tile is not walkable\n", .{});
+                    validTarget = false;
+                    break; 
+                } 
+
+                break;
             }
-
-            const xPosTileSpace: i32 = @divFloor(self.targetX, self.tileSize);
-            const yPosTileSpace: i32 = @divFloor(self.targetY, self.tileSize);
-            const mapWidth_i32Cast: i32 = @intCast(map.mapWidth);
-            const tileIndex_isize: isize = @intCast((yPosTileSpace * mapWidth_i32Cast) + xPosTileSpace);
-            
-            std.debug.print("got tile index {}\n", .{tileIndex_isize});
-            if(tileIndex_isize < 0 or tileIndex_isize >= tilesSlice.len) validTarget = false;
-
-            const tileIndex: usize = @intCast(tileIndex_isize);
-            std.debug.print("is tile walkable? {}\n", .{tilesSlice[tileIndex].walkable});
-            if(tilesSlice[tileIndex].walkable == false) validTarget = false;
 
             if(!validTarget) {
                 std.debug.print("ILLEGAL!! *BUZZER* target pos is outside tile map\n", .{});

@@ -17,10 +17,10 @@ const TileErrors = error{
 pub const Tile = struct {
     id: usize,
     walkable: bool,
-    tilemapX: u32,
-    tilemapY: u32,
-    worldX: u32,
-    worldY: u32,
+    //tilemapX: u32,
+    //tilemapY: u32,
+    //worldX: u32,
+    //worldY: u32,
     texture: ?rl.Texture,
 };
 
@@ -28,6 +28,7 @@ pub const Tilemap = struct {
     mapWidth: u32,
     mapHeight: u32,
     tileSize: u8,
+    tileSetPath: []const u8,
     tileSet: [3][]const u8, // TODO: change later to something different, need to figure out a way to coerce or something
 
     pub fn init(mapWidth: u32, mapHeight: u32, tileSize: u8, tileSet: [3][]const u8) Tilemap {
@@ -37,6 +38,47 @@ pub const Tilemap = struct {
             .tileSize = tileSize,
             .tileSet = tileSet,
         };
+    }
+
+    pub fn getTilemapDimensions(tilemapFile: []const u8, width: *u32, height: *u32) TileErrors!void {
+        var file = std.fs.cwd().openFile(tilemapFile, .{}) catch {
+            return TileErrors.FileAccessError;
+        };
+        defer file.close();
+
+        var buffReader = std.io.bufferedReader(file.reader());
+        var inStream = buffReader.reader();
+
+        var lines: u32 = 0;
+
+        while (true) {
+            var buf: [1024]u8 = undefined;
+            const line_or_err = inStream.readUntilDelimiterOrEof(&buf, '\n') catch |err| {
+                if(err == error.EndOfStream) {
+                    std.debug.print("end of file", .{});
+                    break;
+                } else {
+                    return TileErrors.FileAccessError;
+                }
+            };
+            if (line_or_err) |line| {
+                // process `line` here
+                lines += 1;
+                std.debug.print("line: {s}\n", .{line});
+                var iter = std.mem.splitSequence(u8, line, ",");
+                
+                var nums: u32 = 0;
+                while(iter.next()) |_| {
+                    nums += 1;
+                }
+                width.* = nums;
+            } else {
+                std.debug.print("end of file", .{});
+                break; // End of file
+            }
+        }
+
+        height.* = lines;
     }
 
     pub fn loadTileMapFile(self: *Tilemap, tilemapFile: []const u8) TileErrors![]const Tile {
@@ -82,7 +124,7 @@ pub const Tilemap = struct {
                     if(indexIsize == -1) {
                         const tile: Tile = Tile{
                             .id = 12,
-                            .walkable = true,
+                            .walkable = false,
                             .texture = null,
                         };
                         tileSlice[tilesAdded] = tile;
@@ -107,20 +149,20 @@ pub const Tilemap = struct {
                     tileImage.unload();
                     //rl.unloadImage(tileImage);
 
-                    const tileX: i32 = @intCast(@mod(tilesAdded, self.mapWidth));
-                    const tileY: i32 = @intCast((tilesAdded / self.mapWidth));
+                    //const tileX: i32 = @intCast(@mod(tilesAdded, self.mapWidth));
+                    //const tileY: i32 = @intCast((tilesAdded / self.mapWidth));
 
-                    const realX: i32 = tileX * self.tileSize;
-                    const realY: i32 = tileY * self.tileSize;
+                    //const realX: i32 = tileX * self.tileSize;
+                    //const realY: i32 = tileY * self.tileSize;
 
                     const tile: Tile = Tile{
                         .id = 12,
                         .walkable = if(indexIsize == -1) false else true, //TODO: replace with a function that determines if the index is in a list of walkable tiles
                         .texture = tileTexture,
-                        .tilemapX = tileX,
-                        .tilemapY = tileY,
-                        .worldX = realX,
-                        .worldY = realY,
+                        //.tilemapX = tileX,
+                        //.tilemapY = tileY,
+                        //.worldX = realX,
+                        //.worldY = realY,
                     };
 
                     std.debug.print("tiles Slice length is {}\n", .{tileSlice.len});
@@ -142,14 +184,11 @@ pub const Tilemap = struct {
             const x: i32 = @intCast(@mod(i, self.mapWidth) * self.tileSize);
             const y: i32 = @intCast((i / self.mapWidth) * self.tileSize);
 
-            if(tile.texture == null) {
+            if(tile.texture == null) continue;
                 //std.debug.print("drawing void at {},{}\n", .{x, y});
-                rl.drawRectangle(x, y, x + self.tileSize, y + self.tileSize, rl.Color.white);
-                continue;
-            }
+                //rl.drawRectangle(x, y, x + self.tileSize, y + self.tileSize, rl.Color.white);
 
-            //std.debug.print("drawing tile at {},{}\n", .{x, y});
-            rl.drawTexture(tile.texture.?, x, y, rl.Color.red);
+            rl.drawTexture(tile.texture.?, x, y, rl.Color.white);
         }
     }
 

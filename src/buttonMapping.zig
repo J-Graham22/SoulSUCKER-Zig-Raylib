@@ -1,7 +1,7 @@
 const std = @import("std");
 const rl = @import("raylib");
 
-const buttonMapping = struct {
+pub const buttonMapping = extern struct {
     up: rl.KeyboardKey,
     down: rl.KeyboardKey,
     left: rl.KeyboardKey,
@@ -9,4 +9,6 @@ const buttonMapping = struct {
     confirm: rl.KeyboardKey,
     back: rl.KeyboardKey,
     pause: rl.KeyboardKey,
+
+    //TODO: separate this one out from the save system as well
 };

@@ -4,20 +4,26 @@ const rl = @import("raylib");
 const settings = @import("settings.zig");
 const buttonMapping = @import("buttonMapping.zig");
 
-const GameState = extern struct {
+pub const GameState = extern struct {
     gameSettings: settings.settings,
     buttonMap: buttonMapping.buttonMapping,
 
-    pub fn writeToFile(self: *const GameState, file_path: []const u8) !void {
-        const file = try std.fs.cwd().createFile(file_path, .{ .truncate = true });
+    pub fn writeToFile(self: *const GameState, saveSlot: u16) !void {
+        var buffer: [100]u8 = undefined;
+        const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/save.dat", .{saveSlot});
+
+        const file = try std.fs.cwd().createFile(filePath, .{ .truncate = true });
         defer file.close();
 
         const writer = file.writer();
         try writer.writeStruct(self.*);
     }
 
-    pub fn readFromFile(file_path: []const u8) !GameState {
-        const file = try std.fs.cwd().openFile(file_path, .{});
+    pub fn readFromFile(saveSlot: u16) !GameState {
+        var buffer: [100]u8 = undefined;
+        const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/save.dat", .{saveSlot});
+
+        const file = try std.fs.cwd().openFile(filePath, .{});
         defer file.close();
 
         const reader = file.reader();
@@ -39,5 +45,33 @@ const GameState = extern struct {
 
         // Directory exists; close it
         result.close();
+    }
+
+    pub fn checkIfSaveDataExists() !bool {
+        var saveDataExists = false;
+        const fs = std.fs;
+
+        for(0..6) |i| {
+            var buffer: [100]u8 = undefined;
+            const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/save.dat", .{i});
+
+            const cwd = fs.cwd();
+            var result = cwd.openFile(filePath, .{}) catch |err| switch (err) {
+                error.FileNotFound => {
+                    // Directory does not exist, so create it
+                    continue;
+                },
+                else => {
+                    std.debug.print("unexpected error: {}\n", .{err});
+                    continue;
+                }
+            };
+
+            // Directory exists; close it
+            result.close();
+            saveDataExists = true;
+        }
+
+        return saveDataExists;
     }
 };

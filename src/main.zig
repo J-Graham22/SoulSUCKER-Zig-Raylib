@@ -2,9 +2,19 @@ const rl = @import("raylib");
 const rg = @import("raygui");
 const std = @import("std");
 
+const mainMenu = @import("mainMenu.zig");
+
 const battleModels = @import("battleModels.zig");
 const configuration = @import("configuration.zig");
 const sceneManager = @import("sceneManager.zig");
+
+const settings = @import("settings.zig").settings;
+const buttonMap = @import("buttonMapping.zig");
+const saving = @import("saveSystem.zig");
+
+const Scene2D = @import("2DScene.zig").Scene2D;
+const Scene3D = @import("3DScene.zig").Scene3D;
+const Tilemap = @import("tileset.zig");
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("ZigRaylibGame_lib");
@@ -13,8 +23,18 @@ var debugCamera: bool = false;
 
 
 pub fn main() !void {
-    rl.initWindow(1280, 720, "gaming!!");
+    // Flow of opening the game
+
+    // 1. Check for existing settings. 
+    // If there are none, then this is the first time that the game has been opened here.
+    // In which case, we need to do some logic to determine the best settings
+    // If settings are already there, then we apply them
+    const gameSettings = settings.GetSettingsAtStartup(); 
+
+    rl.initWindow(gameSettings.screenWidth, gameSettings.screenHeight, "gaming!!");
     defer rl.closeWindow();
+
+    rl.setTargetFPS(60);
 
     //const gokuImage = try rl.loadImage("src/assets/goku.png");
     //const gokuTexture = try rl.loadTextureFromImage(gokuImage);
@@ -22,107 +42,67 @@ pub fn main() !void {
     //rl.unloadImage(gokuImage);
     //defer rl.unloadTexture(gokuTexture);
 
-    var camera = rl.Camera3D{
-        .position = .{ .x = 4.0, .y = 2.0, .z = 4.0 },
-        .target = .{ .x = 0.0, .y = 1.0, .z = 0.0 },
-        .up = .{ .x = 0.0, .y = 1.0, .z = 0.0 },
-        .fovy = 45.0,
-        .projection = rl.CameraProjection.perspective,
-    };
+    std.debug.print("loading menu\n", .{});
 
-    rl.setTargetFPS(60);
+    var currentScreen: enum { MainMenu, Options, Game, Exit } = .MainMenu;
 
-    try sceneManager.Load2DScene();
+    const font = try rl.loadFont("src/assets/fonts/CloisterBlack.ttf");
+    defer rl.unloadFont(font);
 
-    const playerParty: [*]battleModels.BattleUnit = configuration.LoadPlayerParty();
-    var units: [4]sceneUnit = LoadSceneUnits(playerParty);
+    rg.guiSetFont(font);
 
-    const enemyParty: [*]battleModels.BattleUnit = configuration.LoadEnemyParty();
-    var enemyUnits: [4]sceneUnit = LoadEnemySceneUnits(enemyParty);
-
-    while (!rl.windowShouldClose()) {
-        const deltaTime: f32 = rl.getFrameTime();
-        if (rl.isKeyPressed(rl.KeyboardKey.apostrophe)) debugCamera = !debugCamera;
-        if (debugCamera) MoveCameraDebug(deltaTime, &camera);
-
+    while (!rl.windowShouldClose() and currentScreen != .Exit) {
         rl.beginDrawing();
         defer rl.endDrawing();
 
-        rl.clearBackground(rl.Color.sky_blue);
+        rl.clearBackground(rl.Color.yellow);
 
-        rl.beginMode3D(camera);
-        defer rl.endMode3D();
+        rl.drawText("NecroSOUL", 330, 100, 40, rl.Color.gray);
+        //TODO: improve this main menu screen a lot
+        rl.drawText("WIP title screen", 530, 170, 40, rl.Color.gray);
 
-        for (units[0..4], 0..4) |_, i| {
-            //const model = rl.loadModel(units[i].pathToModel);
-            const model = try rl.loadModel("src/assets/FinalBaseMesh.obj");
-            defer rl.unloadModel(model);
+        //TODO: do some calculations to actually place these buttons relative to screen size
 
-            rl.drawModel(model, units[i].position, 1.0, units[i].color);
+        switch (currentScreen) {
+            .MainMenu => {
+                const saveDataExists = try saving.GameState.checkIfSaveDataExists();
 
-            //rl.drawCube(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, units[i].color);
-            //rl.drawCubeWires(rl.Vector3{ .x = units[i].position.x, .y = units[i].position.y, .z = units[i].position.z }, 2, 2, 2, rl.Color.black);
+                if(saveDataExists) {
+                    if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 300, .width = 200, .height = 50 }, "Continue") > 0) {
+                        currentScreen = .Game;
+                    }
+                }
+                if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 370, .width = 200, .height = 50 }, "New Game") > 0) {
+                    //const data = &[_][]const u8
+                    //const tilesetLen = Tilemap.walkableTileset.len;
+                    //const data: [tilesetLen][]const u8 = &[_][]const u8{Tilemap.walkableTileset[0..];
+                    const startScene: Scene2D = Scene2D{
+                        .tilemapPath = "src/assets/tilemaps/test.csv",
+                        .tileset = &Tilemap.walkableTileset,
+                        .playerPosX = 0.0,
+                        .playerPosY = 0.0,
+                    };
+                    try sceneManager.Load2DScene(startScene);
+                }
+                if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 420, .width = 200, .height = 50 }, "Options") > 0) {
+                    currentScreen = .Options;
+                }
+                if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 490, .width = 200, .height = 50 }, "Quit") > 0) {
+                    currentScreen = .Exit;
+                }
+            },
+            .Options => {
+                if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 300, .width = 200, .height = 50 }, "Back") > 0) {
+                    currentScreen = .MainMenu;
+                }
+            },
+            .Game => {
+                if (rg.guiButton(rl.Rectangle{ .x = 10, .y = 10, .width = 100, .height = 30 }, "Main Menu") > 0) {
+                    currentScreen = .MainMenu;
+                }
+            },
+            else => {},
         }
-        for (enemyUnits[0..4], 0..4) |_, _| {
-            //rl.drawCube(rl.Vector3{ .x = enemyUnits[j].position.x, .y = enemyUnits[j].position.y, .z = enemyUnits[j].position.z }, 2, 2, 2, enemyUnits[j].color);
-            //rl.drawCubeWires(rl.Vector3{ .x = enemyUnits[j].position.x, .y = enemyUnits[j].position.y, .z = enemyUnits[j].position.z }, 2, 2, 2, rl.Color.black);
-        }
-
-        rl.drawGrid(10, 1.0);
-        //rl.drawCube(rl.Vector3{ .x = 0, .y = 1, .z = 0 }, 2, 2, 2, rl.Color.red);
-        //rl.drawCubeWires(rl.Vector3{ .x = 0, .y = 1, .z = 0 }, 2, 2, 2, rl.Color.black);
-
-        //rl.drawText("Use WASD to move, mouse to look", 10, 10, 20, rl.Color.black);
-        //rl.drawTexture(gokuTexture, 200, 200, rl.Color.green);
     }
 }
 
-fn MoveCameraDebug(deltaTime: f32, camera: *rl.Camera3D) void {
-    camera.update(rl.CameraMode.first_person);
-
-    const speed: f32 = 5.0;
-
-    if (rl.isKeyDown(rl.KeyboardKey.space)) {
-        camera.position.y += speed * deltaTime;
-    }
-    if (rl.isKeyDown(rl.KeyboardKey.left_control)) {
-        camera.position.y -= speed * deltaTime;
-    }
-}
-
-const sceneUnit = struct { unit: *battleModels.BattleUnit, color: rl.Color, position: rl.Vector3, pathToModel: [:0]const u8 };
-
-fn LoadSceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
-    var units: [4]sceneUnit = .{undefined} ** 4;
-
-    for (playerParty[0..4], 0..4) |_, i| {
-        const color: rl.Color = switch (@mod(i, 4)) {
-            0 => rl.Color.red,
-            1 => rl.Color.blue,
-            2 => rl.Color.yellow,
-            3 => rl.Color.green,
-            else => rl.Color.white,
-        };
-
-        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) -5 else 0 };
-
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
-        units[i] = unit;
-    }
-
-    return units;
-}
-
-fn LoadEnemySceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
-    var units: [4]sceneUnit = .{undefined} ** 4;
-
-    for (playerParty[0..4], 0..4) |_, i| {
-        const color: rl.Color = rl.Color.purple;
-        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) 10 else 5 };
-
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
-        units[i] = unit;
-    }
-
-    return units;
-}
