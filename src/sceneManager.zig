@@ -47,6 +47,8 @@ pub fn Load2DScene(scene: Scene2D) !void {
     //rl.unloadImage(gokuImage);
     //defer rl.unloadTexture(gokuTexture);
 
+    var encounterRNGBase: u8 = 5;
+
     while (!rl.windowShouldClose()) {
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -57,7 +59,10 @@ pub fn Load2DScene(scene: Scene2D) !void {
 
         sceneTiles.draw(tiles);
 
-        playerCharacter.handleMovement(sceneTiles, tiles);
+        const justMoved: bool = playerCharacter.handleMovement(sceneTiles, tiles);
+        
+        //handle the random encounters
+        if(justMoved) ProcessRandomEncounter(&encounterRNGBase);
 
         camera.target.x = @floatFromInt(playerCharacter.x);
         camera.target.y = @floatFromInt(playerCharacter.y);
@@ -67,6 +72,26 @@ pub fn Load2DScene(scene: Scene2D) !void {
         rl.endMode2D();
     }
 
+}
+
+pub fn ProcessRandomEncounter(baseVal: *u8) void {
+    //basically, have x value that increases with every instance of walking on a random encounter tile
+    //randomly generate number y 
+    var prng = std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+    var rand = prng.random();
+
+    const rngNum = rand.intRangeAtMost(u8, 1, 100);
+    //if y is less than x, do an encounter
+
+    if(rngNum < baseVal.*) {
+        std.debug.print("random encounter!!", .{});
+        baseVal.* = 5;
+    } else {
+        baseVal.* += 5;
+        if(baseVal.* < 80) baseVal.* = 80;
+    }
+    //start x at 5 or 10, hard cap at 80 or something
+    //after an encounter, reset x back to the base value
 }
 
 pub fn Load3DScene() !void {

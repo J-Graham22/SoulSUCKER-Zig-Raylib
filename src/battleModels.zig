@@ -7,28 +7,23 @@ pub const Stat = enum {
     Speed,
 };
 
-pub const Move = struct {
-    name: [*]const u8,
+pub const Move = extern struct {
+    name: []const u8,
     stat: Stat,
     value: i16,
 };
 
-pub const BattleUnit = struct {
-    name: [*]const u8,
+pub const BattleUnit = extern struct {
+    name: []const u8,
     level: u8,
     exp: u16,
     expToNextLevel: u16,
     currentHealth: u16,
     maxHealth: u16,
-    currentAttack: u16,
     baseAttack: u16,
-    currentMagicAttack: u16,
     baseMagicAttack: u16,
-    currentDefense: u16,
     baseDefense: u16,
-    currentMagicDefense: u16,
     baseMagicDefense: u16,
-    currentSpeed: u16,
     baseSpeed: u16,
     moves: [6]Move,
     backRow: bool,

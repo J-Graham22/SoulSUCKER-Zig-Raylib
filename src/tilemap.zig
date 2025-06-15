@@ -28,7 +28,6 @@ pub const Tilemap = struct {
     mapWidth: u32,
     mapHeight: u32,
     tileSize: u8,
-    tileSetPath: []const u8,
     tileSet: [3][]const u8, // TODO: change later to something different, need to figure out a way to coerce or something
 
     pub fn init(mapWidth: u32, mapHeight: u32, tileSize: u8, tileSet: [3][]const u8) Tilemap {

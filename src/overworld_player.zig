@@ -41,7 +41,7 @@ pub const OverworldPlayer = struct {
         };
     }
 
-    pub fn handleMovement(self: *OverworldPlayer, map: tilemap.Tilemap, tilesSlice: []const tilemap.Tile) void {
+    pub fn handleMovement(self: *OverworldPlayer, map: tilemap.Tilemap, tilesSlice: []const tilemap.Tile) bool {
         if(self.numberOfFramesLeftForTween > 0) {
             var validTarget = true;
 
@@ -84,7 +84,7 @@ pub const OverworldPlayer = struct {
                 self.numberOfFramesLeftForTween = 0; //reset tween frames
                 self.targetX = self.x; //reset target pos
                 self.targetY = self.y;
-                return;
+                return false;
             }
 
             // we want it to take a like 10 frames to move
@@ -113,6 +113,7 @@ pub const OverworldPlayer = struct {
                 },
             }
             self.numberOfFramesLeftForTween -= 1;
+            return self.numberOfFramesLeftForTween == 0;
         } else {
             //here we know the the animation has finished, so we can double check to make sure that the player hit target pos
             if(self.x != self.targetX or self.y != self.targetY) {
@@ -140,6 +141,8 @@ pub const OverworldPlayer = struct {
                 self.targetX += 32;
                 self.direction = dir.RIGHT;
             }
+
+            return false;
         }
     }
 
