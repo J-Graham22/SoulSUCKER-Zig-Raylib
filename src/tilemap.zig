@@ -39,8 +39,10 @@ pub const Tilemap = struct {
         };
     }
 
-    pub fn getTilemapDimensions(tilemapFile: []const u8, width: *u32, height: *u32) TileErrors!void {
-        var file = std.fs.cwd().openFile(tilemapFile, .{}) catch {
+    pub fn getTilemapDimensions(tilemapFile: [*]const u8, tileMapFileLen: usize, width: *u32, height: *u32) TileErrors!void {
+        const slice: []const u8 = tilemapFile[0..tileMapFileLen];
+
+        var file = std.fs.cwd().openFile(slice, .{}) catch {
             return TileErrors.FileAccessError;
         };
         defer file.close();
@@ -80,7 +82,7 @@ pub const Tilemap = struct {
         height.* = lines;
     }
 
-    pub fn loadTileMapFile(self: *Tilemap, tilemapFile: []const u8) TileErrors![]const Tile {
+    pub fn loadTileMapFile(self: *Tilemap, tilemapFile: [*]const u8, tileMapFileLen: usize) TileErrors![]const Tile {
         const allocator = std.heap.page_allocator;
         const arrSize: usize = self.mapWidth * self.mapHeight;
 
@@ -88,7 +90,8 @@ pub const Tilemap = struct {
             return TileErrors.OutOfMemoryError;
         };
 
-        var file = std.fs.cwd().openFile(tilemapFile, .{}) catch {
+        const slice: []const u8 = tilemapFile[0..tileMapFileLen];
+        var file = std.fs.cwd().openFile(slice, .{}) catch {
             return TileErrors.FileAccessError;
         };
         defer file.close();

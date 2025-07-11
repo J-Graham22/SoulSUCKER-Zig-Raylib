@@ -3,11 +3,16 @@ const rl = @import("raylib");
 const rg = @import("raygui");
 
 const Scene2D = @import("2DScene.zig").Scene2D;
+const Scene3D = @import("3DScene.zig").Scene3D;
 const tilemap = @import("tilemap.zig");
 const tileset = @import("tileset.zig");
 const player = @import("overworld_player.zig");
 const battleModels = @import("battleModels.zig");
 const configuration = @import("configuration.zig");
+const Global = @import("globalVariables.zig").global;
+
+//var playerParty: [4]?battleModels.BattleUnit = @import("main.zig").playerParty;
+//var playerParty: [4]?battleModels.BattleUnit = Global.playerParty;
 
 pub fn Load2DScene(scene: Scene2D) !void {
     //TODO: update this to be a more robust solution
@@ -18,14 +23,15 @@ pub fn Load2DScene(scene: Scene2D) !void {
 
     //const tileMapPath = "src/assets/tilemaps/test.csv";
     const tileMapPath = scene.tilemapPath;
+    const tileMapPathLen = scene.tileMapPathLen;
     var mapWidth: u32 = 0;
     var mapHeight: u32 = 0;
 
-    try tilemap.Tilemap.getTilemapDimensions(tileMapPath, &mapWidth, &mapHeight);
+    try tilemap.Tilemap.getTilemapDimensions(tileMapPath, tileMapPathLen, &mapWidth, &mapHeight);
 
     var sceneTiles = tilemap.Tilemap.init(mapWidth, mapHeight, 32, tileset.walkableTileset);
     //const tiles = sceneTiles.loadTileMapFile("src/assets/tilemaps/test.csv") catch |err| {
-    const tiles = sceneTiles.loadTileMapFile(tileMapPath) catch |err| {
+    const tiles = sceneTiles.loadTileMapFile(tileMapPath, tileMapPathLen) catch |err| {
         std.debug.print("the error was {}\n", .{err});
         @panic("whooooooa\n");
     };
@@ -85,6 +91,7 @@ pub fn ProcessRandomEncounter(baseVal: *u8) void {
 
     if(rngNum < baseVal.*) {
         std.debug.print("random encounter!!", .{});
+        try Load3DScene();
         baseVal.* = 5;
     } else {
         baseVal.* += 5;
@@ -94,7 +101,15 @@ pub fn ProcessRandomEncounter(baseVal: *u8) void {
     //after an encounter, reset x back to the base value
 }
 
-pub fn Load3DScene() !void {
+
+
+
+//===============================================================================
+
+
+
+
+pub fn Load3DScene(scene: Scene3D) !void {
     var camera = rl.Camera3D{
         .position = .{ .x = 4.0, .y = 2.0, .z = 4.0 },
         .target = .{ .x = 0.0, .y = 1.0, .z = 0.0 },
@@ -103,8 +118,7 @@ pub fn Load3DScene() !void {
         .projection = rl.CameraProjection.perspective,
     };
 
-    const playerParty: [*]battleModels.BattleUnit = configuration.LoadPlayerParty();
-    var units: [4]sceneUnit = LoadSceneUnits(playerParty);
+    var units: [4]sceneUnit = LoadSceneUnits(Global.playerParty);
 
     const enemyParty: [*]battleModels.BattleUnit = configuration.LoadEnemyParty();
     var enemyUnits: [4]sceneUnit = LoadEnemySceneUnits(enemyParty);
@@ -126,10 +140,25 @@ pub fn Load3DScene() !void {
         rl.beginMode3D(camera);
         defer rl.endMode3D();
 
+        for (Global.playerParty[0..4], 0..4) |unit, i| {
+            if (unit == null) continue;
+            const model = try rl.loadModel(unit.?.pathToModel);
+            defer rl.unloadModel(model);
+
+            const position: rl.Vector3 = rl.Vector3{ 
+                .x = if(unit.?.backRow) -7.0 else -5.0,
+                .y = 0.0,
+                .z = -8.0 + (i * 4.0),
+            };
+
+            rl.drawModel(model, position, 1.0, rl.Color.white);
+        }
+
         for (units[0..4], 0..4) |_, i| {
             //const model = rl.loadModel(units[i].pathToModel);
             const model = try rl.loadModel("src/assets/FinalBaseMesh.obj");
             defer rl.unloadModel(model);
+
 
             rl.drawModel(model, units[i].position, 1.0, units[i].color);
 
@@ -165,10 +194,10 @@ fn MoveCameraDebug(deltaTime: f32, camera: *rl.Camera3D) void {
 
 const sceneUnit = struct { unit: *battleModels.BattleUnit, color: rl.Color, position: rl.Vector3, pathToModel: [:0]const u8 };
 
-fn LoadSceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
+fn LoadSceneUnits(party: [*]battleModels.BattleUnit) [4]sceneUnit {
     var units: [4]sceneUnit = .{undefined} ** 4;
 
-    for (playerParty[0..4], 0..4) |_, i| {
+    for (party[0..4], 0..4) |_, i| {
         const color: rl.Color = switch (@mod(i, 4)) {
             0 => rl.Color.red,
             1 => rl.Color.blue,
@@ -177,23 +206,23 @@ fn LoadSceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
             else => rl.Color.white,
         };
 
-        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) -5 else 0 };
+        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (party[i].backRow) -5 else 0 };
 
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
+        const unit: sceneUnit = .{ .unit = &party[i], .color = color, .position = position, .pathToModel = party[i].pathToModel, };
         units[i] = unit;
     }
 
     return units;
 }
 
-fn LoadEnemySceneUnits(playerParty: [*]battleModels.BattleUnit) [4]sceneUnit {
+fn LoadEnemySceneUnits(party: [*]battleModels.BattleUnit) [4]sceneUnit {
     var units: [4]sceneUnit = .{undefined} ** 4;
 
-    for (playerParty[0..4], 0..4) |_, i| {
+    for (party[0..4], 0..4) |_, i| {
         const color: rl.Color = rl.Color.purple;
-        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (playerParty[i].backRow) 10 else 5 };
+        const position: rl.Vector3 = .{ .x = @floatFromInt(5 * i), .y = 1, .z = if (party[i].backRow) 10 else 5 };
 
-        const unit: sceneUnit = .{ .unit = &playerParty[i], .color = color, .position = position, .pathToModel = playerParty[i].pathToModel, };
+        const unit: sceneUnit = .{ .unit = &party[i], .color = color, .position = position, .pathToModel = party[i].pathToModel, };
         units[i] = unit;
     }
 

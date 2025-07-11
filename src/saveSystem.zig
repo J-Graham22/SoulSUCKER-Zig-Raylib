@@ -4,26 +4,26 @@ const rl = @import("raylib");
 const settings = @import("settings.zig");
 const buttonMapping = @import("buttonMapping.zig");
 
-pub fn writeToFile(self: *const GameState, saveSlot: u16) !void {
+pub fn writeToFile(structToWrite: anytype, saveSlot: u16, saveName: []const u8) !void {
     var buffer: [100]u8 = undefined;
-    const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/save.dat", .{saveSlot});
+    const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/{s}.dat", .{saveSlot, saveName});
 
     const file = try std.fs.cwd().createFile(filePath, .{ .truncate = true });
     defer file.close();
 
     const writer = file.writer();
-    try writer.writeStruct(self.*);
+    try writer.writeStruct(structToWrite);
 }
 
-pub fn readFromFile(saveSlot: u16) !GameState {
+pub fn readFromFile(saveSlot: u16, saveFileName: []const u8, comptime T: type) !T {
     var buffer: [100]u8 = undefined;
-    const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/save.dat", .{saveSlot});
+    const filePath = try std.fmt.bufPrint(&buffer, "src/saves/{}/{s}.dat", .{saveSlot, saveFileName});
 
     const file = try std.fs.cwd().openFile(filePath, .{});
     defer file.close();
 
     const reader = file.reader();
-    return try reader.readStruct(GameState);
+    return try reader.readStruct(T);
 }
 
 pub fn ensureSaveDirectoryExists(path: []const u8) !void {
@@ -71,8 +71,3 @@ pub fn checkIfSaveDataExists() !bool {
     return saveDataExists;
 }
 
-pub const GameState = extern struct {
-    gameSettings: settings.settings,
-    buttonMap: buttonMapping.buttonMapping,
-
-};

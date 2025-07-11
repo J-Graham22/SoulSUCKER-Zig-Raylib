@@ -16,8 +16,14 @@ const Scene2D = @import("2DScene.zig").Scene2D;
 const Scene3D = @import("3DScene.zig").Scene3D;
 const Tilemap = @import("tileset.zig");
 
+const NewGame = @import("newGameInfo.zig");
+
+const Global = @import("globalVariables.zig").global;
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("ZigRaylibGame_lib");
+
+pub var gameSettings: settings = undefined;
+
 
 var debugCamera: bool = false;
 
@@ -29,9 +35,9 @@ pub fn main() !void {
     // If there are none, then this is the first time that the game has been opened here.
     // In which case, we need to do some logic to determine the best settings
     // If settings are already there, then we apply them
-    const gameSettings = settings.GetSettingsAtStartup(); 
+    gameSettings = settings.GetSettingsAtStartup(); 
 
-    rl.initWindow(gameSettings.screenWidth, gameSettings.screenHeight, "gaming!!");
+    rl.initWindow(gameSettings.screenWidth, gameSettings.screenHeight, "Necrobution");
     defer rl.closeWindow();
 
     rl.setTargetFPS(60);
@@ -57,7 +63,7 @@ pub fn main() !void {
 
         rl.clearBackground(rl.Color.yellow);
 
-        rl.drawText("NecroSOUL", 330, 100, 40, rl.Color.gray);
+        rl.drawText("NECTROBUTION", 330, 100, 40, rl.Color.gray);
         //TODO: improve this main menu screen a lot
         rl.drawText("WIP title screen", 530, 170, 40, rl.Color.gray);
 
@@ -65,7 +71,7 @@ pub fn main() !void {
 
         switch (currentScreen) {
             .MainMenu => {
-                const saveDataExists = try saving.GameState.checkIfSaveDataExists();
+                const saveDataExists = try saving.checkIfSaveDataExists();
 
                 if(saveDataExists) {
                     if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 300, .width = 200, .height = 50 }, "Continue") > 0) {
@@ -76,13 +82,16 @@ pub fn main() !void {
                     //const data = &[_][]const u8
                     //const tilesetLen = Tilemap.walkableTileset.len;
                     //const data: [tilesetLen][]const u8 = &[_][]const u8{Tilemap.walkableTileset[0..];
-                    const startScene: Scene2D = Scene2D{
-                        .tilemapPath = "src/assets/tilemaps/test.csv",
-                        .tileset = &Tilemap.walkableTileset,
-                        .playerPosX = 0.0,
-                        .playerPosY = 0.0,
-                    };
-                    try sceneManager.Load2DScene(startScene);
+                    //try NewGame.createNewSave(1);
+                    //NewGame.loadNewSaveInfo(&playerParty, &current2DScene);
+
+                    //const startScene: Scene2D = Scene2D{
+                        //.tilemapPath = "src/assets/tilemaps/test.csv",
+                        //.tileset = Tilemap.walkableTileset,
+                        //.playerPosX = 0.0,
+                        //.playerPosY = 0.0,
+                    //};
+                    try sceneManager.Load2DScene(Global.current2DScene);
                 }
                 if (rg.guiButton(rl.Rectangle{ .x = 300, .y = 420, .width = 200, .height = 50 }, "Options") > 0) {
                     currentScreen = .Options;

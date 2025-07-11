@@ -24,8 +24,8 @@ pub const settings = extern struct {
     pub fn init() settings {
         //TODO: insert some logic here to determine the ideal screen width and height based on the user's monitor
         return settings{
-            .screenWidth = 1280,
-            .screenHeight = 720,
+            .screenWidth = 1920,
+            .screenHeight = 1080,
             .masterVolume = 100,
             .musicVolume = 100,
             .sfxVolume = 100,
